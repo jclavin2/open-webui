@@ -12,13 +12,14 @@
 	import Documents from './MessageInput/Documents.svelte';
 	import Models from './MessageInput/Models.svelte';
 	import { transcribeAudio } from '$lib/apis/audio';
+	import Tooltip from '../common/Tooltip.svelte';
 
 	export let submitPrompt: Function;
 	export let stopResponse: Function;
 
 	export let suggestionPrompts = [];
 	export let autoScroll = true;
-
+	let chatTextAreaElement: HTMLTextAreaElement;
 	let filesInputElement;
 
 	let promptsElement;
@@ -42,11 +43,9 @@
 	let speechRecognition;
 
 	$: if (prompt) {
-		const chatInput = document.getElementById('chat-textarea');
-
-		if (chatInput) {
-			chatInput.style.height = '';
-			chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
+		if (chatTextAreaElement) {
+			chatTextAreaElement.style.height = '';
+			chatTextAreaElement.style.height = Math.min(chatTextAreaElement.scrollHeight, 200) + 'px';
 		}
 	}
 
@@ -85,9 +84,7 @@
 			if (res) {
 				prompt = res.text;
 				await tick();
-
-				const inputElement = document.getElementById('chat-textarea');
-				inputElement?.focus();
+				chatTextAreaElement?.focus();
 
 				if (prompt !== '' && $settings?.speechAutoSend === true) {
 					submitPrompt(prompt, user);
@@ -190,8 +187,7 @@
 						prompt = `${prompt}${transcript}`;
 
 						await tick();
-						const inputElement = document.getElementById('chat-textarea');
-						inputElement?.focus();
+						chatTextAreaElement?.focus();
 
 						// Restart the inactivity timeout
 						timeoutId = setTimeout(() => {
@@ -293,8 +289,7 @@
 	};
 
 	onMount(() => {
-		const chatInput = document.getElementById('chat-textarea');
-		window.setTimeout(() => chatInput?.focus(), 0);
+		window.setTimeout(() => chatTextAreaElement?.focus(), 0);
 
 		const dropZone = document.querySelector('body');
 
@@ -364,12 +359,12 @@
 
 {#if dragged}
 	<div
-		class="fixed w-full h-full flex z-50 touch-none pointer-events-none"
+		class="fixed lg:w-[calc(100%-260px)] w-full h-full flex z-50 touch-none pointer-events-none"
 		id="dropzone"
 		role="region"
 		aria-label="Drag and Drop Container"
 	>
-		<div class="absolute rounded-xl w-full h-full backdrop-blur bg-gray-800/40 flex justify-center">
+		<div class="absolute w-full h-full backdrop-blur bg-gray-800/40 flex justify-center">
 			<div class="m-auto pt-64 flex flex-col justify-center">
 				<div class="max-w-md">
 					<AddFilesPlaceholder />
@@ -637,29 +632,32 @@
 					<div class=" flex">
 						{#if fileUploadEnabled}
 							<div class=" self-end mb-2 ml-1">
-								<button
-									class="bg-gray-50 hover:bg-gray-100 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full p-1.5"
-									type="button"
-									on:click={() => {
-										filesInputElement.click();
-									}}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 16 16"
-										fill="currentColor"
-										class="w-[1.2rem] h-[1.2rem]"
+								<Tooltip content="Upload files">
+									<button
+										class="bg-gray-50 hover:bg-gray-100 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full p-1.5"
+										type="button"
+										on:click={() => {
+											filesInputElement.click();
+										}}
 									>
-										<path
-											d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"
-										/>
-									</svg>
-								</button>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 16 16"
+											fill="currentColor"
+											class="w-[1.2rem] h-[1.2rem]"
+										>
+											<path
+												d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"
+											/>
+										</svg>
+									</button>
+								</Tooltip>
 							</div>
 						{/if}
 
 						<textarea
 							id="chat-textarea"
+							bind:this={chatTextAreaElement}
 							class=" dark:bg-gray-900 dark:text-gray-100 outline-none w-full py-3 px-3 {fileUploadEnabled
 								? ''
 								: ' pl-4'} rounded-xl resize-none h-[48px]"
@@ -806,87 +804,97 @@
 
 						<div class="self-end mb-2 flex space-x-1 mr-1">
 							{#if messages.length == 0 || messages.at(-1).done == true}
-								{#if speechRecognitionEnabled}
+								<Tooltip content="Record voice">
+									{#if speechRecognitionEnabled}
+										<button
+											id="voice-input-button"
+											class=" text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-850 transition rounded-full p-1.5 mr-0.5 self-center"
+											type="button"
+											on:click={() => {
+												speechRecognitionHandler();
+											}}
+										>
+											{#if isRecording}
+												<svg
+													class=" w-5 h-5 translate-y-[0.5px]"
+													fill="currentColor"
+													viewBox="0 0 24 24"
+													xmlns="http://www.w3.org/2000/svg"
+													><style>
+														.spinner_qM83 {
+															animation: spinner_8HQG 1.05s infinite;
+														}
+														.spinner_oXPr {
+															animation-delay: 0.1s;
+														}
+														.spinner_ZTLf {
+															animation-delay: 0.2s;
+														}
+														@keyframes spinner_8HQG {
+															0%,
+															57.14% {
+																animation-timing-function: cubic-bezier(0.33, 0.66, 0.66, 1);
+																transform: translate(0);
+															}
+															28.57% {
+																animation-timing-function: cubic-bezier(0.33, 0, 0.66, 0.33);
+																transform: translateY(-6px);
+															}
+															100% {
+																transform: translate(0);
+															}
+														}
+													</style><circle class="spinner_qM83" cx="4" cy="12" r="2.5" /><circle
+														class="spinner_qM83 spinner_oXPr"
+														cx="12"
+														cy="12"
+														r="2.5"
+													/><circle
+														class="spinner_qM83 spinner_ZTLf"
+														cx="20"
+														cy="12"
+														r="2.5"
+													/></svg
+												>
+											{:else}
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+													class="w-5 h-5 translate-y-[0.5px]"
+												>
+													<path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
+													<path
+														d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z"
+													/>
+												</svg>
+											{/if}
+										</button>
+									{/if}
+								</Tooltip>
+
+								<Tooltip content="Send message">
 									<button
-										id="voice-input-button"
-										class=" text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-850 transition rounded-full p-1.5 mr-0.5 self-center"
-										type="button"
-										on:click={() => {
-											speechRecognitionHandler();
-										}}
+										class="{prompt !== ''
+											? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
+											: 'text-white bg-gray-100 dark:text-gray-900 dark:bg-gray-800 disabled'} transition rounded-full p-1.5 self-center"
+										type="submit"
+										disabled={prompt === ''}
 									>
-										{#if isRecording}
-											<svg
-												class=" w-5 h-5 translate-y-[0.5px]"
-												fill="currentColor"
-												viewBox="0 0 24 24"
-												xmlns="http://www.w3.org/2000/svg"
-												><style>
-													.spinner_qM83 {
-														animation: spinner_8HQG 1.05s infinite;
-													}
-													.spinner_oXPr {
-														animation-delay: 0.1s;
-													}
-													.spinner_ZTLf {
-														animation-delay: 0.2s;
-													}
-													@keyframes spinner_8HQG {
-														0%,
-														57.14% {
-															animation-timing-function: cubic-bezier(0.33, 0.66, 0.66, 1);
-															transform: translate(0);
-														}
-														28.57% {
-															animation-timing-function: cubic-bezier(0.33, 0, 0.66, 0.33);
-															transform: translateY(-6px);
-														}
-														100% {
-															transform: translate(0);
-														}
-													}
-												</style><circle class="spinner_qM83" cx="4" cy="12" r="2.5" /><circle
-													class="spinner_qM83 spinner_oXPr"
-													cx="12"
-													cy="12"
-													r="2.5"
-												/><circle class="spinner_qM83 spinner_ZTLf" cx="20" cy="12" r="2.5" /></svg
-											>
-										{:else}
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												viewBox="0 0 20 20"
-												fill="currentColor"
-												class="w-5 h-5 translate-y-[0.5px]"
-											>
-												<path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
-												<path
-													d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z"
-												/>
-											</svg>
-										{/if}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 16 16"
+											fill="currentColor"
+											class="w-5 h-5"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
+												clip-rule="evenodd"
+											/>
+										</svg>
 									</button>
-								{/if}
-								<button
-									class="{prompt !== ''
-										? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
-										: 'text-white bg-gray-100 dark:text-gray-900 dark:bg-gray-800 disabled'} transition rounded-full p-1.5 self-center"
-									type="submit"
-									disabled={prompt === ''}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 16 16"
-										fill="currentColor"
-										class="w-5 h-5"
-									>
-										<path
-											fill-rule="evenodd"
-											d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
-											clip-rule="evenodd"
-										/>
-									</svg>
-								</button>
+								</Tooltip>
 							{:else}
 								<button
 									class="bg-white hover:bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-800 transition rounded-full p-1.5"

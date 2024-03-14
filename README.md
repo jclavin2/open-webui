@@ -23,7 +23,6 @@ User-friendly claims decision support system. EDI 837 expert and learns your bus
 
 ## Build and Install 🛠️
 
-Run the following commands to install:
 ```
 git clone https://github.com/open-webui/open-webui.git
 cd open-webui/
