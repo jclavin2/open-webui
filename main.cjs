@@ -6,11 +6,13 @@ let mainWindow;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1000,
+        height: 800,
         webPreferences: {
             nodeIntegration: true,
+            javascript: { eval: 'unsafe-eval' },
         },
+
     });
 
 
@@ -28,7 +30,7 @@ function createWindow() {
 }
 
 function startServer() {
-    const serverProcess = spawn('uvicorn', ['main:app', '--host', '0.0.0.0', '--port', 8080, '--forwarded-allow-ips', '*'], {
+    const serverProcess = spawn('/Users/jamesclavin/opt/miniconda3/envs/gemini/bin/uvicorn', ['main:app', '--host', '0.0.0.0', '--port', 8080, '--forwarded-allow-ips', '*'], {
         cwd: path.join(__dirname, 'backend'), // Adjust the path to your server directory
         stdio: 'inherit',
     });
