@@ -3,6 +3,7 @@
 	"version": "0.1.124",
 	"private": true,
 	"scripts": {
+		"start": "electron main.cjs",
 		"dev": "vite dev --host",
 		"build": "vite build",
 		"preview": "vite preview",
@@ -27,6 +28,7 @@
 		"@typescript-eslint/parser": "^6.17.0",
 		"autoprefixer": "^10.4.16",
 		"cypress": "^13.8.1",
+		"electron": "^30.0.3",
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-cypress": "^3.0.2",
