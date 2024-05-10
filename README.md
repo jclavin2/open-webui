@@ -1,6 +1,3 @@
-UI - README
-
-
 # Medical Data Polygraph
 ## For evaluation and payment of Electronic Data Interchange  (EDI) 837 data
 User-friendly claims decision support system. EDI 837 expert and learns your business process flows over time. 
