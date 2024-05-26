@@ -167,7 +167,7 @@
 	//////////////////////////
 
 	const submitPrompt = async (userPrompt, _user = null) => {
-		console.log('submitPrompt', $chatId);
+		console.log('ollama submitPrompt', $chatId);
 
 		selectedModels = selectedModels.map((modelId) =>
 			$models.map((m) => m.id).includes(modelId) ? modelId : ''

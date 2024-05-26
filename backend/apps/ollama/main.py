@@ -1,3 +1,21 @@
+from utils.misc import calculate_sha256
+from config import (
+    SRC_LOG_LEVELS,
+    OLLAMA_BASE_URLS,
+    ENABLE_MODEL_FILTER,
+    MODEL_FILTER_LIST,
+    UPLOAD_DIR,
+)
+from utils.utils import (
+    decode_token,
+    get_current_user,
+    get_verified_user,
+    get_admin_user,
+)
+from constants import ERROR_MESSAGES
+from apps.web.models.users import Users
+from typing import Optional, List, Union
+from urllib.parse import urlparse
 from fastapi import (
     FastAPI,
     Request,
@@ -26,31 +44,20 @@ import aiohttp
 import asyncio
 import logging
 import time
-from urllib.parse import urlparse
-from typing import Optional, List, Union
+import sys  # noqa
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                '/Users/jamesclavin/medical-data-polygraph'))
+import BFTRAG  # noqa
 
-
-from apps.web.models.users import Users
-from constants import ERROR_MESSAGES
-from utils.utils import (
-    decode_token,
-    get_current_user,
-    get_verified_user,
-    get_admin_user,
-)
-
-
-from config import (
-    SRC_LOG_LEVELS,
-    OLLAMA_BASE_URLS,
-    ENABLE_MODEL_FILTER,
-    MODEL_FILTER_LIST,
-    UPLOAD_DIR,
-)
-from utils.misc import calculate_sha256
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OLLAMA"])
+
+log.info(f"imported BFTRAG")
+bft_rag = BFTRAG.BFTRAG("EDI", "How many claims are there?")
+
+answer = bft_rag.run_question()
+log.info(f"BFTRAG answer: {answer}")
 
 app = FastAPI()
 app.add_middleware(
@@ -118,7 +125,8 @@ async def cancel_ollama_request(request_id: str, user=Depends(get_current_user))
             REQUEST_POOL.remove(request_id)
         return True
     else:
-        raise HTTPException(status_code=401, detail=ERROR_MESSAGES.ACCESS_PROHIBITED)
+        raise HTTPException(
+            status_code=401, detail=ERROR_MESSAGES.ACCESS_PROHIBITED)
 
 
 async def fetch_url(url):
@@ -153,12 +161,14 @@ def merge_models_lists(model_lists):
 
 async def get_all_models():
     log.info("get_all_models()")
-    tasks = [fetch_url(f"{url}/api/tags") for url in app.state.OLLAMA_BASE_URLS]
+    tasks = [fetch_url(f"{url}/api/tags")
+             for url in app.state.OLLAMA_BASE_URLS]
     responses = await asyncio.gather(*tasks)
 
     models = {
         "models": merge_models_lists(
-            map(lambda response: response["models"] if response else None, responses)
+            map(lambda response: response["models"]
+                if response else None, responses)
         )
     }
 
@@ -216,7 +226,8 @@ async def get_ollama_versions(url_idx: Optional[int] = None):
     if url_idx == None:
 
         # returns lowest version
-        tasks = [fetch_url(f"{url}/api/version") for url in app.state.OLLAMA_BASE_URLS]
+        tasks = [fetch_url(f"{url}/api/version")
+                 for url in app.state.OLLAMA_BASE_URLS]
         responses = await asyncio.gather(*tasks)
         responses = list(filter(lambda x: x is not None, responses))
 
@@ -1142,7 +1153,8 @@ async def download_file_stream(
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(file_url, headers=headers) as response:
-            total_size = int(response.headers.get("content-length", 0)) + current_size
+            total_size = int(response.headers.get(
+                "content-length", 0)) + current_size
 
             with open(file_path, "ab+") as file:
                 async for data in response.content.iter_chunked(chunk_size):
