@@ -54,10 +54,7 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OLLAMA"])
 
 log.info(f"imported BFTRAG")
-bft_rag = BFTRAG.BFTRAG("EDI", "How many claims are there?")
 
-answer = bft_rag.run_question()
-log.info(f"BFTRAG answer: {answer}")
 
 app = FastAPI()
 app.add_middleware(
@@ -902,6 +899,26 @@ async def generate_chat_completion(
                         r.close()
                         if request_id in REQUEST_POOL:
                             REQUEST_POOL.remove(request_id)
+
+            log.info(f"BFTRAG form_data: {form_data}")
+
+            temp_data = form_data.model_dump_json(exclude_none=True).encode()
+
+            log.info(f"BFTRAG temp_data: {temp_data}")
+
+            parsed_data = json.loads(temp_data)
+
+            # Extract the last role and content
+            last_message = parsed_data["messages"][-2]
+            last_role = last_message["role"]
+            last_content = last_message["content"]
+            log.info(f"BFTRAG last_role: {last_role}")
+            log.info(f"BFTRAG last_content: {last_content}")
+
+            bft_rag = BFTRAG.BFTRAG("EDI", last_content)
+
+            answer = bft_rag.run_question()
+            log.info(f"BFTRAG answer: {answer}")
 
             r = requests.request(
                 method="POST",
