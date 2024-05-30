@@ -182,7 +182,7 @@
 
 	const submitPrompt = async (userPrompt, _user = null) => {
 		console.log('ollama c submitPrompt', $chatId);
-
+		console.log('ollama d submitPrompt', userPrompt);
 		if (selectedModels.includes('')) {
 			toast.error($i18n.t('Model not selected'));
 		} else if (messages.length != 0 && messages.at(-1).done != true) {
