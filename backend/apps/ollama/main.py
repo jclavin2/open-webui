@@ -1,3 +1,4 @@
+from collections import namedtuple
 from utils.misc import calculate_sha256
 from config import (
     SRC_LOG_LEVELS,
@@ -918,7 +919,25 @@ async def generate_chat_completion(
             bft_rag = BFTRAG.BFTRAG("EDI", last_content)
 
             answer = bft_rag.run_question()
+
             log.info(f"BFTRAG answer: {answer}")
+            bft_answer = "The answer is " + answer + ". Please regurgitate this answer."
+
+            # bft_prompt = ChatMessage(
+            #    role='user', content='Please respond letting me know that you found the answer and what it was.')
+            # bft_empty_assistant = ChatMessage(role='assistant', content='')
+            for message in form_data.messages:
+                if message.content == last_content:
+                    message.content = bft_answer
+            #         message.content = bft_answer
+
+            # form_data.messages.append(bft_prompt)
+            # form_data.messages.append(bft_empty_assistant)
+
+            # assistant_answer = "Assistant:  There are " + answer + " claims."
+
+            # form_data.messages[-1].content = assistant_answer
+            log.info(f"BFTRAG form_data: {form_data}")
 
             r = requests.request(
                 method="POST",
@@ -971,8 +990,8 @@ class OpenAIChatCompletionForm(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-@app.post("/v1/chat/completions")
-@app.post("/v1/chat/completions/{url_idx}")
+@ app.post("/v1/chat/completions")
+@ app.post("/v1/chat/completions/{url_idx}")
 async def generate_openai_chat_completion(
     form_data: OpenAIChatCompletionForm,
     url_idx: Optional[int] = None,
@@ -1060,8 +1079,8 @@ async def generate_openai_chat_completion(
         )
 
 
-@app.get("/v1/models")
-@app.get("/v1/models/{url_idx}")
+@ app.get("/v1/models")
+@ app.get("/v1/models/{url_idx}")
 async def get_openai_models(
     url_idx: Optional[int] = None,
     user=Depends(get_verified_user),
@@ -1210,8 +1229,8 @@ async def download_file_stream(
 
 
 # url = "https://huggingface.co/TheBloke/stablelm-zephyr-3b-GGUF/resolve/main/stablelm-zephyr-3b.Q2_K.gguf"
-@app.post("/models/download")
-@app.post("/models/download/{url_idx}")
+@ app.post("/models/download")
+@ app.post("/models/download/{url_idx}")
 async def download_model(
     form_data: UrlForm,
     url_idx: Optional[int] = None,
@@ -1241,8 +1260,8 @@ async def download_model(
         return None
 
 
-@app.post("/models/upload")
-@app.post("/models/upload/{url_idx}")
+@ app.post("/models/upload")
+@ app.post("/models/upload/{url_idx}")
 def upload_model(file: UploadFile = File(...), url_idx: Optional[int] = None):
     if url_idx == None:
         url_idx = 0
@@ -1344,7 +1363,7 @@ def upload_model(file: UploadFile = File(...), url_idx: Optional[int] = None):
 #     )
 
 
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@ app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def deprecated_proxy(
     path: str, request: Request, user=Depends(get_verified_user)
 ):
