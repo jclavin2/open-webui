@@ -56,6 +56,7 @@ log.setLevel(SRC_LOG_LEVELS["OLLAMA"])
 
 log.info(f"imported BFTRAG")
 
+bft_rag_first_time = True
 
 app = FastAPI()
 app.add_middleware(
@@ -879,7 +880,7 @@ async def generate_chat_completion(
     def get_request():
         nonlocal form_data
         nonlocal r
-
+        global bft_rag_first_time
         request_id = str(uuid.uuid4())
         try:
             REQUEST_POOL.append(request_id)
@@ -916,12 +917,14 @@ async def generate_chat_completion(
             log.info(f"BFTRAG last_role: {last_role}")
             log.info(f"BFTRAG last_content: {last_content}")
 
-            bft_rag = BFTRAG.BFTRAG("EDI", last_content)
+            bft_rag = BFTRAG.BFTRAG("EDI", last_content, bft_rag_first_time)
 
             answer = bft_rag.run_question()
+            bft_rag_first_time = False
 
             log.info(f"BFTRAG answer: {answer}")
-            bft_answer = "The answer is " + answer + ". Please regurgitate this answer."
+            bft_answer = "The question is:  " + last_content + ". The answer is " + \
+                answer + ". Please regurgitate this answer without any further explanation."
 
             # bft_prompt = ChatMessage(
             #    role='user', content='Please respond letting me know that you found the answer and what it was.')
