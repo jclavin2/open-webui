@@ -46,6 +46,8 @@ import asyncio
 import logging
 import time
 import sys  # noqa
+import threading
+from queue import Queue
 sys.path.append(os.path.join(os.path.dirname(__file__),
                 '/Users/jamesclavin/medical-data-polygraph'))
 import BFTRAG  # noqa
@@ -918,8 +920,25 @@ async def generate_chat_completion(
             log.info(f"BFTRAG last_content: {last_content}")
 
             bft_rag = BFTRAG.BFTRAG("EDI", last_content, bft_rag_first_time)
+            log.info(f"BFTRAG calling async run_question")
+            answer = ""
+            result_queue = Queue()
 
-            answer = bft_rag.run_question()
+            try:
+
+                thread = threading.Thread(
+                    target=bft_rag.run_question, args=(result_queue,))
+                thread.start()
+                thread.join()  # Wait for the thread to complete
+
+                # Get the result from the queue
+                answer = result_queue.get()
+
+                # answer = await bft_rag.run_question()
+
+            except Exception as e:
+                log.error(f"BFTRAG error: {e}")
+
             bft_rag_first_time = False
 
             log.info(f"BFTRAG answer: {answer}")
